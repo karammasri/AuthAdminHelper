@@ -4,7 +4,7 @@ The Authentication Administrator Helper PowerShell module includes additional fu
 
 ## Importing the PowerShell module
 
-Open PowerShell and change to the folder where the module file was downloaded and import the module using:
+Open PowerShell, change to the folder where the module file was downloaded and import the module using:
 
 ```powershell
 Import-Module .\authadmin.psm1
@@ -16,7 +16,7 @@ The module can also be [implicitly imported](https://docs.microsoft.com/en-us/po
 
 An authentication prompt will be displayed the first time a function is called that requires connectivity to Azure AD. Additional calls to functions in the module will not require re-authentication once the first authentication succeeds.
 
-The authentication prompt relies on the `Connect-MSOLService` function provided by the MSOnline module.
+The authentication prompt relies on the `Connect-MSOLService` function provided by the MSOnline module. Any conditional access policies that apply when calling `Connect-MSOLService` will then also apply to users using this module (e.g. MFA).
 
 ### Permissions required by the user using the module
 
@@ -30,7 +30,9 @@ Assignments to these roles can be managed using [Azure AD Privileged Identity Ma
 
 The module relies on the permissions granted over the target user objects in the tenant by the Azure AD administrative role that the calling user is member of. There are no special additional permissions granted by this module.
 
-## Getting the MFA authentication methods for a user
+## Functions provided by this module
+
+### Get the MFA authentication methods for a user
 
 Run the following command to get the MFA authentication methods for a user:
 
@@ -46,7 +48,7 @@ The methods are shown using the aliases described in [MFA Methods aliases](#mfa-
 
 A second column named IsDefault is added to the output. The column will contain the value “True” for the default authentication method and “False” for all the other methods.
 
-## Changing the default MFA authentication method for a user
+### Change the default MFA authentication method for a user
 
 Run the following command to change the default MFA authentication method for a user:
 
@@ -61,7 +63,7 @@ Where:
 
 The user should have already registered this method for the change to take effect. An error is shown if the user doesn’t have the selected method registered.
 
-## Resetting the MFA authentication methods for a user
+### Reset the MFA authentication methods for a user
 
 Run the following command to reset the MFA authentication methods for a user:
 
@@ -73,7 +75,7 @@ Where `<UPN>` is the User Principal Name of the user. The command accepts only o
 
 The effect of running this command is that the user will have to register again for Azure MFA.
 
-## Getting the aliases of MFA authentication methods
+## Display the aliases of MFA authentication methods
 
 Run the following command to get the aliases of the MFA authentication methods:
 
@@ -84,6 +86,8 @@ Show-MFAMethodsNames
 The output will show the aliases as described in [MFA Methods aliases](#mfa-methods-aliases).
 
 ## MFA Methods aliases
+
+The module uses the following aliases to identify MFA methods:
 
 |Alias                      |Description  |
 |---------------------------|-------------|
