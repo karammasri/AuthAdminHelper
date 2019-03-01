@@ -230,7 +230,8 @@ function Reset-MFAUserAuthenticationMethods
     }
 
     $ShouldProcessDescription = "Reset MFA methods for user $UserPrincipalName"
-    $ShouldProcessWarning = "$UserPrincipalName has $($Methods.Count) MFA methods registered. Are you sure that you want to remove all these MFA methods?"
+    $ShouldProcessWarning = "$UserPrincipalName has $($Methods.Count) MFA methods registered.`n"
+    $ShouldProcessWarning += "Are you sure that you want to remove all these MFA methods?"
 
     if ($PSCmdlet.ShouldProcess($ShouldProcessDescription, $ShouldProcessWarning, ""))
     {
