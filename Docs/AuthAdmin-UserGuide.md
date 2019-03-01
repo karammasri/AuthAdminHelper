@@ -16,7 +16,7 @@ The output will show the authentication methods registered for the user. Methods
 
 The methods are shown using the aliases described in [MFA Methods aliases](#mfa-methods-aliases).
 
-A second column named IsDefault is added to the output. The column will contain the value “True” for the default authentication method for the user. All the other registered methods will show a value of “False” in this column.
+A second column named IsDefault is added to the output. The column will contain the value “True” for the default authentication method and “False” for all the other methods.
 
 ## Changing the default MFA authentication method for a user
 
