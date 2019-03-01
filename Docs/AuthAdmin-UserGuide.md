@@ -80,7 +80,7 @@ The effect of running this command is that the user will have to register again 
 Run the following command to get the aliases of the MFA authentication methods:
 
 ```powershell
-Show-MFAMethodsNames
+Get-MFAMethodsAliases
 ```
 
 The output will show the aliases as described in [MFA Methods aliases](#mfa-methods-aliases).

@@ -80,7 +80,6 @@ function Out-Error
     Out-Message -Message "ERROR: $Message" -Color $ErrorColor
 }
 
-
 function Out-Warning
 {
     [CmdletBinding()]
@@ -167,6 +166,27 @@ function Get-MFAUser
     return $User
 }
 
+<#
+.SYNOPSIS
+Resets the MFA authentication methods for a user
+
+.DESCRIPTION
+Resets the MFA authentication methods for a user. All the MFA methods are removed and the user will have to re-register.
+
+An authentication prompt is displayed if a session to Azure AD hasn't been established.
+
+.PARAMETER UserPrincipalName
+The UserPrincipalName in Azure AD of the user to reset the MFA methods for.
+
+.EXAMPLE
+Reset-MFAUserAuthenticationMethods -UserPrincipalName johndoe@contoso.com
+
+Resets the MFA methods of the user johndoe@contoso.com.
+
+.NOTES
+The calling user should have permissions to complete the operation over the target user.
+An error is generated if the calling user doesn't have permissions over the target user.
+#>
 function Reset-MFAUserAuthenticationMethods
 {
     [CmdletBinding()]
@@ -217,6 +237,40 @@ function Reset-MFAUserAuthenticationMethods
 }
 Export-ModuleMember -Function 'Reset-MFAUserAuthenticationMethods'
 
+<#
+.SYNOPSIS
+Sets the default MFA authentication method for a user
+
+.DESCRIPTION
+Sets the default MFA authentication methods for a user. The user should have already registered the method to set as default.
+
+The list of registered MFA methods for a user can be obtained by running Get-MFAUserAuthenticationMethods.
+The list of possible values for the method parameter can be obtained from the output of Get-MFAUserAuthenticationMethods
+or by running Show-MFAMethodsNames.
+
+An authentication prompt is displayed if a session to Azure AD hasn't been established.
+
+.PARAMETER UserPrincipalName
+The UserPrincipalName in Azure AD of the user to set the default MFA methods for.
+
+.PARAMETER Method
+The new default method to set. The target user should already have this method registered. Tab-completion can be used to
+cycle through the available values.
+
+.EXAMPLE
+Set-MFAUserDefaultAuthenticationMethod -UserPrincipalName johndoe@contoso.com -Method TwoWayVoiceMobile
+
+Sets the default MFA method for johndoe@contoso.com to TwoWayVoiceMobile.
+
+.EXAMPLE
+Set-MFAUserDefaultAuthenticationMethod -UserPrincipalName janedoe@contoso.onmicrosoft.com -Method PhoneAppNotification
+
+Sets the default MFA method for janedoe@contoso.onmicrosoft.com to PhoneAppNotification.
+
+.NOTES
+The calling user should have permissions to complete the operation over the target user.
+An error is generated if the calling user doesn't have permissions over the target user.
+#>
 function Set-MFAUserDefaultAuthenticationMethod
 {
     [CmdletBinding()]
@@ -309,6 +363,31 @@ function Set-MFAUserDefaultAuthenticationMethod
 }
 Export-ModuleMember -Function 'Set-MFAUserDefaultAuthenticationMethod'
 
+<#
+.SYNOPSIS
+Gets the MFA authentication methods of a user
+
+.DESCRIPTION
+Gets the list of MFA authentication methods registered by a user, including the selected default method.
+Only registered methods are listed.
+
+A output includes a second property named IsDefault for each method. The property will contain the value “True” for 
+the default authentication method and “False” for all the other methods.
+
+An authentication prompt is displayed if a session to Azure AD hasn't been established.
+
+.PARAMETER UserPrincipalName
+The UserPrincipalName in Azure AD of the user to set the default MFA methods for.
+
+.EXAMPLE
+Get-MFAUserAuthenticationMethods -UserPrincipalName johndoe@contoso.com
+
+Gets the MFA methods registered for johndoe@contoso.com.
+
+.NOTES
+The calling user should have permissions to complete the operation over the target user.
+An error is generated if the calling user doesn't have permissions over the target user.
+#>
 function Get-MFAUserAuthenticationMethods
 {
     [CmdletBinding()]
@@ -353,10 +432,20 @@ function Get-MFAUserAuthenticationMethods
 }
 Export-ModuleMember -Function 'Get-MFAUserAuthenticationMethods'
 
-# Just a helper function to show the aliases of the MFA methods names
-# to be used as parameters in other functions
-function Show-MFAMethodsNames
+<#
+.SYNOPSIS
+Shows the list of aliases used to identity MFA methods.
+
+.DESCRIPTION
+Shows the list of aliases used to identity MFA methods.
+
+.EXAMPLE
+Get-MFAMethodsAliases
+
+Shows the list of aliases used to identity MFA methods
+#>
+function Get-MFAMethodsAliases
 {
     [enum]::GetNames([MFAMethods])
 }
-Export-ModuleMember -Function Show-MFAMethodsNames
+Export-ModuleMember -Function Get-MFAMethodsAliases
