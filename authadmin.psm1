@@ -278,7 +278,6 @@ Set-MFAUserDefaultAuthenticationMethod -UserPrincipalName janedoe@contoso.onmicr
 Sets the default MFA method for janedoe@contoso.onmicrosoft.com to PhoneAppNotification.
 
 .NOTES
-The calling user should have permissions to complete the operation over the target user.
 An error is generated if the calling user doesn't have permissions over the target user.
 #>
 function Set-MFAUserDefaultAuthenticationMethod
@@ -471,4 +470,4 @@ function Get-MFAMethodsAliases
 {
     [enum]::GetNames([MFAMethods])
 }
-Export-ModuleMember -Function Get-MFAMethodsAliases
+Export-ModuleMember -Function 'Get-MFAMethodsAliases'
