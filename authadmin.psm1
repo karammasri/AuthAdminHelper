@@ -54,11 +54,11 @@ function Out-Message
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Message,
 
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [System.ConsoleColor]
         $Color = $DefaultColor
     )
@@ -72,7 +72,7 @@ function Out-Error
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Message
     )
@@ -86,7 +86,7 @@ function Out-Warning
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Message
     )
@@ -131,7 +131,7 @@ function Get-MFAUser
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [Alias("UPN")]
         [string]
         $UserPrincipalName
@@ -175,6 +175,8 @@ Resets the MFA authentication methods for a user. All the MFA methods are remove
 
 An authentication prompt is displayed if a session to Azure AD hasn't been established.
 
+The cmdlet will prompt for confirmation before committing the changes.
+
 .PARAMETER UserPrincipalName
 The UserPrincipalName in Azure AD of the user to reset the MFA methods for.
 
@@ -183,17 +185,22 @@ Reset-MFAUserAuthenticationMethods -UserPrincipalName johndoe@contoso.com
 
 Resets the MFA methods of the user johndoe@contoso.com.
 
+.INPUTS
+None
+
+.OUTPUTS
+None
+
 .NOTES
-The calling user should have permissions to complete the operation over the target user.
 An error is generated if the calling user doesn't have permissions over the target user.
 #>
 function Reset-MFAUserAuthenticationMethods
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess = "True", ConfirmImpact = "High")]
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [Alias("UPN")]
         [string]
         $UserPrincipalName
@@ -222,18 +229,23 @@ function Reset-MFAUserAuthenticationMethods
         return
     }
 
-    # Reset the strong authentication methods for the user
-    try
-    {
-        Set-MsolUser -UserPrincipalName $UserPrincipalName -StrongAuthenticationMethods @()
-    }
-    catch
-    {
-        Out-Error "Unable to reset authentication methods for $UserPrincipalName"
-        return
-    }
+    $ShouldProcessDescription = "Reset MFA methods for user $UserPrincipalName"
+    $ShouldProcessWarning = "$UserPrincipalName has $($Methods.Count) MFA methods registered. Are you sure that you want to remove all these MFA methods?"
 
-    Out-Message "MFA methods reset for user $UserPrincipalName"
+    if ($PSCmdlet.ShouldProcess($ShouldProcessDescription, $ShouldProcessWarning, ""))
+    {
+        try
+        {
+            Set-MsolUser -UserPrincipalName $UserPrincipalName -StrongAuthenticationMethods @()
+        }
+        catch
+        {
+            Out-Error "Unable to reset authentication methods for $UserPrincipalName"
+            return
+        }
+
+        Out-Message "MFA methods reset for user $UserPrincipalName"
+    }
 }
 Export-ModuleMember -Function 'Reset-MFAUserAuthenticationMethods'
 
@@ -277,12 +289,12 @@ function Set-MFAUserDefaultAuthenticationMethod
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [Alias("UPN")]
         [string]
         $UserPrincipalName,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [MFAMethods]
         $Method
     )
@@ -371,7 +383,7 @@ Gets the MFA authentication methods of a user
 Gets the list of MFA authentication methods registered by a user, including the selected default method.
 Only registered methods are listed.
 
-A output includes a second property named IsDefault for each method. The property will contain the value “True” for 
+Each returned method includes a property named IsDefault. The property will contain the value “True” for 
 the default authentication method and “False” for all the other methods.
 
 An authentication prompt is displayed if a session to Azure AD hasn't been established.
@@ -384,8 +396,15 @@ Get-MFAUserAuthenticationMethods -UserPrincipalName johndoe@contoso.com
 
 Gets the MFA methods registered for johndoe@contoso.com.
 
+.INPUTS
+None
+
+.OUTPUTS
+A collection of PowerShell custom objects, each of these objects has two properties:
+* MethodType (String): the method alias
+* IsDefault (Boolean): True if this object represents the default method, False otherwise
+
 .NOTES
-The calling user should have permissions to complete the operation over the target user.
 An error is generated if the calling user doesn't have permissions over the target user.
 #>
 function Get-MFAUserAuthenticationMethods
@@ -394,7 +413,7 @@ function Get-MFAUserAuthenticationMethods
 
     param
     (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [Alias("UPN")]
         [string]
         $UserPrincipalName
@@ -443,6 +462,12 @@ Shows the list of aliases used to identity MFA methods.
 Get-MFAMethodsAliases
 
 Shows the list of aliases used to identity MFA methods
+
+.INPUTS
+None
+
+.OUTPUTS
+None
 #>
 function Get-MFAMethodsAliases
 {

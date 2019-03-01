@@ -73,7 +73,7 @@ Reset-MFAUserAuthenticationMethods -UserPrincipalName <UPN>
 
 Where `<UPN>` is the User Principal Name of the user. The command accepts only one User Principal Name per call.
 
-The effect of running this command is that the user will have to register again for Azure MFA.
+The cmdlet has an [confirm impact](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-6#confirmpreference) of "High" and will request confirmation before committing changes.
 
 ## Display the aliases of MFA authentication methods
 
