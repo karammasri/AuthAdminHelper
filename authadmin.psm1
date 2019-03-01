@@ -20,7 +20,6 @@
 #requires -Module MSOnline
 
 Set-StrictMode -Version 'Latest'
-$DebugMode = $false # DO NOT CHANGE THIS VALUE!
 
 # RegEx to check if an UPN looks valid
 $UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9._%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A-Z]{2,63}$"
@@ -33,8 +32,6 @@ $ConnectedToMSOL = $false
 # Colors to use for messages output
 $ErrorColor   = [System.ConsoleColor]::Red
 $WarningColor = [System.ConsoleColor]::Yellow
-$VerboseColor = [System.ConsoleColor]::Green
-$DebugColor   = [System.ConsoleColor]::Magenta
 $DefaultColor = [System.ConsoleColor]::Cyan
 
 # The aliases of the MFA methods used in AAD
