@@ -2,6 +2,34 @@
 
 The Authentication Administrator Helper PowerShell module includes additional functions that might be required by helpdesk/admins in the Authentication Administrator role that are not currently included in the Azure AD Portal.
 
+## Importing the PowerShell module
+
+Open PowerShell and change to the folder where the module file was downloaded and import the module using:
+
+```powershell
+Import-Module .\authadmin.psm1
+```
+
+The module can also be [implicitly imported](https://docs.microsoft.com/en-us/powershell/developer/module/importing-a-powershell-module#implicitly-importing-a-module-powershell-30) by PowerShell if stored in a folder that is in the `PSModulePath` environment variable.
+
+## Authenticating to Azure AD
+
+An authentication prompt will be displayed the first time a function is called that requires connectivity to Azure AD. Additional calls to functions in the module will not require re-authentication once the first authentication succeeds.
+
+The authentication prompt relies on the `Connect-MSOLService` function provided by the MSOnline module.
+
+### Permissions required by the user using the module
+
+The user calling the functions in this module should be a member of one of the following [Azure AD administrative roles](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/directory-assign-admin-roles):
+
+- Global Administrator
+- Authentication Administrator
+- Privileged Authentication Administrator
+
+Assignments to these roles can be managed using [Azure AD Privileged Identity Management](https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-configure). The user will need to complete [activation of the role](https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-how-to-activate-role) before using this module.
+
+The module relies on the permissions granted over the target user objects in the tenant by the Azure AD administrative role that the calling user is member of. There are no special additional permissions granted by this module.
+
 ## Getting the MFA authentication methods for a user
 
 Run the following command to get the MFA authentication methods for a user:
