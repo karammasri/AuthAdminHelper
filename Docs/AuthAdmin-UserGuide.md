@@ -2,7 +2,17 @@
 
 The Authentication Administrator Helper PowerShell module includes additional functions that might be required by helpdesk/admins in the Authentication Administrator role that are not currently included in the Azure AD Portal.
 
-## Importing the PowerShell module
+## Pre-requisites
+
+This modules uses functions in the [MSOnline](https://docs.microsoft.com/en-us/powershell/module/msonline/?view=azureadps-1.0) PowerShell module.
+
+The MSOnline module can be downloaded and installed from the PowerShell gallery using:
+
+```powershell
+Install-Module MSOnline
+```
+
+## Importing the Authentication Administrator Helper PowerShell module
 
 Open PowerShell, change to the folder where the module file was downloaded and import the module using:
 

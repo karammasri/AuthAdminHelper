@@ -20,21 +20,20 @@
 #requires -Module MSOnline
 
 Set-StrictMode -Version 'Latest'
-$DebugMode = $false # DO NOT CHANGE THIS VALUE!
 
 # RegEx to check if an UPN looks valid
-$UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9._%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A-Z]{2,63}$"
+$UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9.#_%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A-Z]{2,63}$"
 
 # Initialization code
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
 $ConnectedToMSOL = $false
+$InitialDomain = ""
 
 # Colors to use for messages output
 $ErrorColor   = [System.ConsoleColor]::Red
 $WarningColor = [System.ConsoleColor]::Yellow
-$VerboseColor = [System.ConsoleColor]::Green
-$DebugColor   = [System.ConsoleColor]::Magenta
+$VerboseColor = [System.ConsoleColor]::Magenta
 $DefaultColor = [System.ConsoleColor]::Cyan
 
 # The aliases of the MFA methods used in AAD
@@ -80,6 +79,19 @@ function Out-Error
     Out-Message -Message "ERROR: $Message" -Color $ErrorColor
 }
 
+function Out-Verbose
+{
+    [CmdletBinding()]
+
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Message
+    )
+
+    Out-Message -Message "VERBOSE: $Message" -Color $VerboseColor
+}
 function Out-Warning
 {
     [CmdletBinding()]
@@ -125,6 +137,40 @@ function Connect-MSOL
     return $true
 }
 
+function Get-InitialDomain
+{
+    if(($script:InitialDomain) -and ($script:InitialDomain.Length -gt 0))
+    {
+        return $true
+    }
+
+    if (!(Connect-MSOL))
+    {
+        return $false
+    }
+
+    try
+    {
+        $Domain = @(Get-MSOLDomain | Where-Object { $_.IsInitial })
+        if ($Domain.Count -ne 1)
+        {
+            throw
+        }
+
+        if (($Domain) -and ($Domain[0].Name.Length -gt 0))
+        {
+            $script:InitialDomain = $Domain[0].Name
+        }
+    }
+    catch
+    {
+        Out-Error "Unable to determine initial domain"
+        return $false
+    }
+    
+    return $true
+}
+
 function Get-MFAUser
 {
     [CmdletBinding()]
@@ -149,21 +195,26 @@ function Get-MFAUser
         return $null
     }
 
-    try
+    $User = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction SilentlyContinue
+    if ($User)
     {
-        $User = Get-MsolUser -UserPrincipalName $UserPrincipalName
-        if (!$User)
-        {
-            throw
-        }
-    }
-    catch
-    {
-        Out-Error "Cannot find user with UPN $UserPrincipalName"
-        return $null
+        return $user            
     }
 
-    return $User
+    # Lets try to find out if the user is B2B and the UPN has been mangled
+    if (Get-InitialDomain)
+    {
+        $B2BUPN = (($UserPrincipalName -split "@") -join "_") + "#EXT#@" + $InitialDomain
+        $User = Get-MsolUser -UserPrincipalName $B2BUPN -ErrorAction SilentlyContinue
+        if (($User) -and ($User.SignInName -eq $UserPrincipalName))
+        {
+            Out-Verbose "$UserPrincipalName is a B2B user. User UPN: $($User.UserPrincipalName)."
+            return $User
+        }
+    }
+
+    Out-Error "Cannot find user with UPN $UserPrincipalName"
+    return $null
 }
 
 <#
@@ -281,7 +332,6 @@ Set-MFAUserDefaultAuthenticationMethod -UserPrincipalName janedoe@contoso.onmicr
 Sets the default MFA method for janedoe@contoso.onmicrosoft.com to PhoneAppNotification.
 
 .NOTES
-The calling user should have permissions to complete the operation over the target user.
 An error is generated if the calling user doesn't have permissions over the target user.
 #>
 function Set-MFAUserDefaultAuthenticationMethod
@@ -474,4 +524,4 @@ function Get-MFAMethodsAliases
 {
     [enum]::GetNames([MFAMethods])
 }
-Export-ModuleMember -Function Get-MFAMethodsAliases
+Export-ModuleMember -Function 'Get-MFAMethodsAliases'
