@@ -28,10 +28,12 @@ $UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9.#_%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
 $ConnectedToMSOL = $false
+$InitialDomain = ""
 
 # Colors to use for messages output
 $ErrorColor   = [System.ConsoleColor]::Red
 $WarningColor = [System.ConsoleColor]::Yellow
+$VerboseColor = [System.ConsoleColor]::Magenta
 $DefaultColor = [System.ConsoleColor]::Cyan
 
 # The aliases of the MFA methods used in AAD
@@ -77,6 +79,19 @@ function Out-Error
     Out-Message -Message "ERROR: $Message" -Color $ErrorColor
 }
 
+function Out-Verbose
+{
+    [CmdletBinding()]
+
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Message
+    )
+
+    Out-Message -Message "VERBOSE: $Message" -Color $VerboseColor
+}
 function Out-Warning
 {
     [CmdletBinding()]
@@ -122,6 +137,22 @@ function Connect-MSOL
     return $true
 }
 
+function Get-InitialDomain
+{
+    if ($script:InitialDomain.Length -gt 0)
+    {
+        return $true
+    }
+
+    if (!(Connect-MSOL))
+    {
+        return $false
+    }
+
+    $script:InitialDomain = (Get-MSOLDomain | Where-Object { $_.IsInitial }).Name
+    return $true
+}
+
 function Get-MFAUser
 {
     [CmdletBinding()]
@@ -146,21 +177,26 @@ function Get-MFAUser
         return $null
     }
 
-    try
+    $User = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction SilentlyContinue
+    if ($User)
     {
-        $User = Get-MsolUser -UserPrincipalName $UserPrincipalName
-        if (!$User)
-        {
-            throw
-        }
-    }
-    catch
-    {
-        Out-Error "Cannot find user with UPN $UserPrincipalName"
-        return $null
+        return $user            
     }
 
-    return $User
+    # Lets try to find out if the user is B2B and the UPN has been mangled
+    if (Get-InitialDomain)
+    {
+        $B2BUPN = (($UserPrincipalName -split "@") -join "_") + "#EXT#@" + $InitialDomain
+        $User = Get-MsolUser -UserPrincipalName $B2BUPN -ErrorAction SilentlyContinue
+        if (($User) -and ($User.SignInName -eq $UserPrincipalName))
+        {
+            Out-Verbose "$UserPrincipalName is a B2B user. User UPN: $($User.UserPrincipalName)."
+            return $User
+        }
+    }
+
+    Out-Error "Cannot find user with UPN $UserPrincipalName"
+    return $null
 }
 
 <#
