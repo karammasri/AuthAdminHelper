@@ -139,7 +139,7 @@ function Connect-MSOL
 
 function Get-InitialDomain
 {
-    if ($script:InitialDomain.Length -gt 0)
+    if(($script:InitialDomain) -and ($script:InitialDomain.Length -gt 0))
     {
         return $true
     }
@@ -149,7 +149,25 @@ function Get-InitialDomain
         return $false
     }
 
-    $script:InitialDomain = (Get-MSOLDomain | Where-Object { $_.IsInitial }).Name
+    try
+    {
+        $Domain = @(Get-MSOLDomain | Where-Object { $_.IsInitial })
+        if ($Domain.Count -gt 1)
+        {
+            throw
+        }
+
+        if (($Domain) -and ($Domain[0].Name.Length -gt 0))
+        {
+            $script:InitialDomain = $Domain[0].Name
+        }
+    }
+    catch
+    {
+        Out-Error "Unable to determine initial domain"
+        return $false
+    }
+    
     return $true
 }
 
