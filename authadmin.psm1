@@ -22,7 +22,7 @@
 Set-StrictMode -Version 'Latest'
 
 # RegEx to check if an UPN looks valid
-$UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9._%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A-Z]{2,63}$"
+$UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9.#_%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A-Z]{2,63}$"
 
 # Initialization code
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
