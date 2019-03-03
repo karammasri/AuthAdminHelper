@@ -1,6 +1,6 @@
 # User Guide
 
-The Authentication Administrator Helper PowerShell module includes additional functions that might be required by helpdesk/admins in the Authentication Administrator role that are not currently included in the Azure AD Portal.
+The Authentication Administrator Helper PowerShell module includes additional functions that might be required by help-desk/admins managing MFA settings for users. These cmdlets add functionality that is not currently included in the Azure AD Portal.
 
 ## Pre-requisites
 
@@ -120,6 +120,8 @@ The script uses common PowerShell output cmdlets for reporting Errors, Warnings 
 The level of output generated depends on the settings for the [preferences variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-6) that impact these cmdlets.
 
 For example, the [$InformationPreference](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-6#informationpreference) variable is set by default to `SilentlyContinue`, which will then cause that Information level messages are not going to be sent to the screen. Modify this variable to `Continue` to get the information messages to the screen.
+
+You can also use the [PowerShell Common Parameters](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_commonparameters?view=powershell-6) with any of the cmdlets in this module.
 
 ## MFA Methods aliases
 
