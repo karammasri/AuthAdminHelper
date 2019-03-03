@@ -525,3 +525,106 @@ function Get-MFAMethodsAliases
     [enum]::GetNames([MFAMethods])
 }
 Export-ModuleMember -Function 'Get-MFAMethodsAliases'
+
+<#
+.SYNOPSIS
+Disables per-user MFA configuration (enabled/enforced) in an Azure AD account without removing the already registered methods.
+
+.DESCRIPTION
+This cmdlet allows to disable per-user MFA configuration for a user without loosing the MFA methods already registered by the user.
+
+Disabling per-user MFA using the MFA portal also removes the authentication methods already registered by the user. This forces the user to have to re-register 
+the authentication methods again once a conditional access policy that requires MFA applies to the. This could complicate the process of moving user from 
+per-user MFA, and potentially add help desk calls.
+
+.PARAMETER UserPrincipalName
+The UserPrincipalName in Azure AD of the user to convert from per-user MFA.
+
+.PARAMETER RemoveMethods
+Indicates that the currently registered MFA methods by the user should be removed as part of disabling per-user MFA.
+
+.EXAMPLE
+Disable-PerUserMFA -UserPrincipalName johndoe@contoso.com
+
+Disables per-user MFA for the user johndoe@contoso.com without removing the registered MFA methods.
+
+.EXAMPLE
+Disable-PerUserMFA -UserPrincipalName johndoe@contoso.com -RemoveMethods
+
+Disables per-user MFA for the user johndoe@contoso.com and removes the registered MFA methods.
+
+.INPUTS
+None
+
+.OUTPUTS
+None
+
+.NOTES
+An error is generated if the calling user doesn't have permissions over the target user.
+#>
+function Disable-PerUserMFA
+{
+    [CmdletBinding()]
+
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [Alias("UPN")]
+        [string]
+        $UserPrincipalName,
+
+        [Parameter()]
+        [switch]
+        $RemoveMethods
+    )
+
+    $User = Get-MFAUser -UserPrincipalName $UserPrincipalName
+
+    if ($null -eq $User)
+    {
+        return
+    }
+
+    # As of 01MAR19, Get-MSOLUser returns $null in StrongAuthenticationMethods if the
+    # user running the cmdlet does not have permissions over the target object,
+    # but returns an empty collection if the permission is granted but the collection is empty
+    $Methods = $User.StrongAuthenticationMethods
+    if ($null -eq $Methods)
+    {
+        Out-Error "You don't have permissions to modify MFA properties for $UserPrincipalName"
+        return
+    }
+
+    if ($User.StrongAuthenticationRequirements.Count -eq 0)
+    {
+        Out-Error "$UserPrincipalName is not configured for per-user MFA."
+        return
+    }
+    
+    try 
+    {
+        Set-MsolUser -UserPrincipalName $UserPrincipalName -StrongAuthenticationRequirements @()
+        if (($Methods.Count -gt 0) -and (!$RemoveMethods))       
+        {
+            Set-MsolUser -UserPrincipalName $UserPrincipalName -StrongAuthenticationMethods $Methods
+        }
+    }
+    catch
+    {
+        Out-Error "Unable to convert $($User.UserPrincipalName) from per-user MFA"
+        return        
+    }
+
+    $Message = "Disabled per-user MFA for $UserPrincipalName. $($Methods.Count) existing registered MFA methods were "
+    if ($RemoveMethods)
+    {
+        $Message += "removed."
+    }
+    else
+    {
+        $Message += "kept."
+    }
+
+    Out-Message $Message
+}
+Export-ModuleMember -Function 'Disable-PerUserMFA'

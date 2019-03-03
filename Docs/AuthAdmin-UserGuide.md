@@ -85,7 +85,26 @@ Where `<UPN>` is the User Principal Name of the user. The command accepts only o
 
 The cmdlet has an [confirm impact](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-6#confirmpreference) of "High" and will request confirmation before committing changes.
 
-## Display the aliases of MFA authentication methods
+### Disabling per-user MFA for a user
+
+This cmdlet can be used to disable per-user MFA without loosing registered methods.
+
+Run the following command to disable per-user MFA for a user:
+
+```powershell
+Disable-PerUserMFA -UserPrincipalName <UPN> [-RemoveMethods]
+```
+
+Where:
+
+- `<UPN>` is the User Principal Name of the user to disable per-user MFA for. The command accepts only one User Principal Name per call.
+- `RemoveMethods` is an optional switch parameters that indicates that the currently registered MFA methods by the user should also be removed as part of disabling per-user MFA. By default the currently registered MFA methods are kept unless this switch is included in the call.
+
+Disabling per-user MFA using the Azure MFA portal also removes the authentication methods already registered by the user. This forces the user to have to re-register
+the authentication methods again once a conditional access policy that requires MFA applies to the user. By using this cmdlet **without** the `RemoveMethods` switch, per-user MFA can be disabled without loosing registered MFA methods.
+
+
+### Display the aliases of MFA authentication methods
 
 Run the following command to get the aliases of the MFA authentication methods:
 
