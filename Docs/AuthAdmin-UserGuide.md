@@ -103,7 +103,6 @@ Where:
 Disabling per-user MFA using the Azure MFA portal also removes the authentication methods already registered by the user. This forces the user to have to re-register
 the authentication methods again once a conditional access policy that requires MFA applies to the user. By using this cmdlet **without** the `RemoveMethods` switch, per-user MFA can be disabled without loosing registered MFA methods.
 
-
 ### Display the aliases of MFA authentication methods
 
 Run the following command to get the aliases of the MFA authentication methods:
@@ -113,6 +112,14 @@ Get-MFAMethodsAliases
 ```
 
 The output will show the aliases as described in [MFA Methods aliases](#mfa-methods-aliases).
+
+## About the output messages
+
+The script uses common PowerShell output cmdlets for reporting Errors, Warnings and Information ([Write-Error](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/write-error?view=powershell-6), [Write-Warning](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/write-warning?view=powershell-6) and [Write-Information](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/write-information?view=powershell-6)).
+
+The level of output generated depends on the settings for the [preferences variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-6) that impact these cmdlets.
+
+For example, the [$InformationPreference](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-6#informationpreference) variable is set by default to `SilentlyContinue`, which will then cause that Information level messages are not going to be sent to the screen. Modify this variable to `Continue` to get the information messages to the screen.
 
 ## MFA Methods aliases
 
