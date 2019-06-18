@@ -640,6 +640,30 @@ function Get-AuthAdminRoleID
 	return $true
 }
 
+<#
+.SYNOPSIS
+Lists delegated Authentication Administrators to an Administrative Unit.
+
+.DESCRIPTION
+This cmdlet allows to list the Authentication Administrators role to a specific Administrative Unit.
+
+.PARAMETER AdministrativeUnitName
+The name of the Administrative Unit to  which  Authentication Administrator is going to be delegated.
+
+.EXAMPLE
+Get-DelegatedAuthAdminsToAU -AdministrativeUnitName AUName
+
+List the delegated Authentication Administrators to the Administrative Unit AUName.
+
+.INPUTS
+None
+
+.OUTPUTS
+None
+
+.NOTES
+An error is also generated if the calling user doesn't have permissions to perform the operation.
+#>
 function Get-DelegatedAuthAdminsToAU
 {
 	[CmdletBinding()]
@@ -711,6 +735,35 @@ function Get-AuthAdminRoleID
 	return $true
 }
 
+<#
+.SYNOPSIS
+Adds a delegate Authentication Administrator to an Administrative Unit.
+
+.DESCRIPTION
+This cmdlet allows to delegate the Authentication Administrator role to a specific Administrative Unit.
+
+.PARAMETER AdministrativeUnitName
+The name of the Administrative Unit to  which  Authentication Administrator is going to be delegated.
+
+.PARAMETER AuthenticationAdminUPN
+The UserPrincipalName of the delegated Authentication Administrator to add.
+
+.EXAMPLE
+Add-DelegatedAuthAdminsToAU -AdministrativeUnitName AUName -AuthenticationAdminUPN AdminUPN
+
+Adds user with UserPrincipalName AdminUPN as an Authentication Administrator to the Administrative Unit AUName.
+
+.INPUTS
+None
+
+.OUTPUTS
+None
+
+.NOTES
+An error is generated if the user with UserPrincipalName supplied is already delegated as an Authentication Administrator over the Administrative Unit.
+
+An error is also generated if the calling user doesn't have permissions to perform the operation.
+#>
 function Add-DelegatedAuthAdminsToAU
 {
 	[CmdletBinding()]
@@ -773,6 +826,35 @@ function Add-DelegatedAuthAdminsToAU
 }
 Export-ModuleMember -Function 'Add-DelegatedAuthAdminsToAU'
 
+<#
+.SYNOPSIS
+Removes a delegate Authentication Administrator from an Administrative Unit.
+
+.DESCRIPTION
+This cmdlet allows to remove the delegation of the Authentication Administrator role on a specific Administrative Unit.
+
+.PARAMETER AdministrativeUnitName
+The name of the Administrative Unit from which to remove the delegated Authentication Administrator.
+
+.PARAMETER AuthenticationAdminUPN
+The UserPrincipalName of the delegated Authentication Administrator to remove.
+
+.EXAMPLE
+Remove-DelegatedAuthAdminsToAU -AdministrativeUnitName AUName -AuthenticationAdminUPN AdminUPN
+
+Removes user with UserPrincipalName AdminUPN as an Authentication Administrator from the Administrative Unit AUName.
+
+.INPUTS
+None
+
+.OUTPUTS
+None
+
+.NOTES
+An error is generated if the user with UserPrincipalName supplied is not delegated as an Authentication Administrator on the Administrative Unit.
+
+An error is also generated if the calling user doesn't have permissions to perform the operation.
+#>
 function Remove-DelegatedAuthAdminsToAU
 {
 	[CmdletBinding()]
