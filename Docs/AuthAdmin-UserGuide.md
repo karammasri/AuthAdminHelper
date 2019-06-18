@@ -131,7 +131,7 @@ Where:
 
 -`<AUName>` is the display name of the Administrative Unit to query for delegated Authentication Administrators.
 
-## Add a delegated Authentication Administrators to an Administrative Unit
+## Add a delegated Authentication Administrator to an Administrative Unit
 
 Run the following command to add a delegated Authentication Administrators to an Administrative Unit
 
@@ -144,7 +144,7 @@ Where:
 - `<AUName>` is the display name of the Administrative Unit to query for delegated Authentication Administrators.
 - `<AuthenticationAdminUPN>` is the user principal name of the delegated Authentication Administrator to add to the Administrative Unit
 
-## Remove a delegated Authentication Administrators from an Administrative Unit
+## Remove a delegated Authentication Administrator from an Administrative Unit
 
 Run the following command to remove a delegated Authentication Administrators from an Administrative Unit
 
