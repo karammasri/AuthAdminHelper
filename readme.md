@@ -7,6 +7,7 @@ Download the [Module](authadmin.psm1) to a local folder. The module requires the
 Check the [User Guide](Docs/AuthAdmin-UserGuide.md) for the full documentation.
 
 ## DISCLAIMER
+
 This module is intended to be used as a demonstration script.
 
 THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF

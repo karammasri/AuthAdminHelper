@@ -1,6 +1,6 @@
 ﻿<# 
     Authentication Admin module
-    Version: 0.1.0
+    Version: 1.0.0
 
     This is a module that implements functions that complement the currently implemented functionality
     for the Authentication Administrator role in Azure AD
@@ -17,7 +17,6 @@
 #>
 
 #requires -Version 5.1
-#requires -Module MSOnline
 
 Set-StrictMode -Version 'Latest'
 
@@ -26,6 +25,7 @@ $UPNRegEx = "(?i)^[A-Z0-9][A-Z0-9.#_%+-]{0,63}@(?:[A-Z0-9]+(?:-[A-Z0-9]+)*\.)+[A
 
 $ConnectedToMSOL = $false
 $InitialDomain = ""
+$AuthAdminRoleID = $null
 
 # The aliases of the MFA methods used in AAD
 enum MFAMethods
@@ -54,6 +54,22 @@ function Connect-MSOL
         return $true
     }
 
+	# Verify required modules are present
+	$MSOLModuleInfo = @{ModuleName='MSOnline'; ModuleVersion='1.1.183'}
+
+	if ($null -eq (Get-Module -FullyQualifiedName $MSOLModuleInfo -ListAvailable))
+	{
+		Write-Error "Missing MSOnline module."
+		return $false
+	}
+
+	$AzureADModuleInfo = @{ModuleName='AzureAD*'; ModuleVersion='2.0.2'}    # The wildcard allows to find the preview module if present
+	if ($null -eq (Get-Module -FullyQualifiedName $AzureADModuleInfo -ListAvailable))
+	{
+		Write-Error "Missing AzureAD module."
+		return $false
+	}
+
     Connect-MsolService
     if (!$?)
     {
@@ -61,8 +77,40 @@ function Connect-MSOL
         return $false
     }
 
+	# Get an access token for AAD Graph to be used by the AzureAD module
+	# using the context already acquired with the MSOL module
+
+	$ClientId    = "1b730954-1685-4b74-9bfd-dac224a7b894"
+	$AADGraphURI = "https://graph.windows.net"
+	$Authority   = "https://login.microsoftonline.com/common"
+	$RedirectUri = "urn:ietf:wg:oauth:2.0:oob"
+
+	$PlatformParameters = New-Object -TypeName Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList ([Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Auto)
+
+	try
+	{
+		$AuthenticationContext = New-Object -TypeName Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $Authority
+		if (!$AuthenticationContext)
+		{
+			throw
+		}
+	
+		$AuthenticationResult = $AuthenticationContext.AcquireTokenAsync($AADGraphURI, $ClientId, $RedirectUri, $PlatformParameters)
+		if (!$AuthenticationResult)
+		{
+			throw
+		}
+
+		Connect-AzureAD -AadAccessToken $AuthenticationResult.Result.AccessToken -AccountId $AuthenticationResult.Result.UserInfo.DisplayableId -ErrorAction Stop | Out-Null
+	}
+	catch
+	{
+		$script:ConnectedToMSOL = $false
+		return $false
+	}
+
     $script:ConnectedToMSOL = $true
-    
+
     return $true
 }
 
@@ -543,3 +591,244 @@ function Disable-PerUserMFA
     Write-Information $Message
 }
 Export-ModuleMember -Function 'Disable-PerUserMFA'
+
+function Get-AUByName
+{
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$AUName
+	)
+
+    if (!(Connect-MSOL))
+    {
+        return $null
+	}
+	
+	try
+	{
+		$Filter = "DisplayName eq '$AUName'"
+		$AU = @(Get-AzureADAdministrativeUnit -Filter $Filter)
+		if ($AU.Count -ne 1)
+		{
+			return $null
+		}
+	}
+	catch
+	{
+		return $null
+	}
+
+	return $AU[0].ObjectId
+}
+
+function Get-AuthAdminRoleID
+{
+	if ($null -ne $Script:AuthAdminRoleID)
+	{
+		return $true
+	}
+
+	$AuthAdminRole = @(Get-AzureADDirectoryRole | Where-Object { $_.DisplayName -eq "Authentication Administrator" })
+	if (($null -eq $AuthAdminRole) -or ($AuthAdminRole.Count -ne 1))
+	{
+		return $false
+	}
+
+	$Script:AuthAdminRoleID = $AuthAdminRole[0].ObjectId
+	return $true
+}
+
+function Get-DelegatedAuthAdminsToAU
+{
+	[CmdletBinding()]
+
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[Alias('AUName')]
+		[string]
+		[ValidateNotNullOrEmpty()]
+		$AdministrativeUnitName
+	)
+
+	$AUId = Get-AUByName -AUName $AdministrativeUnitName
+	if (!$AUId)
+	{
+		Write-Error "Cannot find Administrative Unit with name: $AdministrativeUnitName"
+		return
+	}
+
+	if (!(Get-AuthAdminRoleID))
+	{
+		Write-Error "Unable to get the role ID for the Authentication Administrator role"
+		return
+	}
+
+	try
+	{
+		$ScopedAdmins = @(Get-AzureADScopedRoleMembership -ObjectId $AUId | Where-Object { $_.RoleObjectId -eq $Script:AuthAdminRoleID})
+
+		if ($ScopedAdmins.Count -eq 0)
+		{
+			Write-Warning "No delegated administrator exists for Administrative Unit $AdministrativeUnitName"
+			return
+		}
+		else
+		{
+			$ScopedAdmins | Select-Object -ExpandProperty RoleMemberInfo | Select-Object -Property DisplayName, UserPrincipalName
+		}
+	}
+	catch
+	{
+		return
+	}
+}
+Export-ModuleMember -Function 'Get-DelegatedAuthAdminsToAU'
+
+function Get-AuthAdminRoleID
+{
+	if ($null -ne $Script:AuthAdminRoleID)
+	{
+		return $true
+	}
+
+	try
+	{
+		$AuthAdminRole = @(Get-AzureADDirectoryRole | Where-Object { $_.DisplayName -eq "Authentication Administrator" })
+		if (($null -eq $AuthAdminRole) -or ($AuthAdminRole.Count -ne 1))
+		{
+			return $false
+		}
+	}
+	catch
+	{
+		return $false
+	}
+
+	$Script:AuthAdminRoleID = $AuthAdminRole[0].ObjectId
+	return $true
+}
+
+function Add-DelegatedAuthAdminsToAU
+{
+	[CmdletBinding()]
+
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[Alias('AUName')]
+		[string]
+		[ValidateNotNullOrEmpty()]
+		$AdministrativeUnitName,
+
+		[Parameter(Mandatory = $true)]
+		[Alias('UPN')]
+		[string]
+		[ValidateNotNullOrEmpty()]
+		$AuthenticationAdminUPN		
+	)
+
+	$AUId = Get-AUByName -AUName $AdministrativeUnitName
+	if (!$AUId)
+	{
+		Write-Error "Cannot find Administrative Unit with name: $AdministrativeUnitName"
+		return
+	}
+
+	if (!(Get-AuthAdminRoleID))
+	{
+		Write-Error "Unable to get the role ID for the Authentication Administrator role"
+		return
+	}
+
+	$AuthAdminUser = Get-MFAUser -UserPrincipalName $AuthenticationAdminUPN
+	if ($null -eq $AuthAdminUser)
+	{
+		Write-Error "Cannot find user with UPN $AuthenticationAdminUPN"
+		return
+	}
+
+	try
+	{
+		$IsInRoleAlready = (@(Get-AzureADScopedRoleMembership -ObjectId $AUId | Where-Object { ($_.RoleObjectId -eq $Script:AuthAdminRoleID) -and ($_.RoleMemberInfo.ObjectId -eq $AuthAdminUser.ObjectId) }).Count -gt 1)
+
+		if ($IsInRoleAlready)
+		{
+			Write-Warning "$($AuthAdminUser.UserPrincipalName) is already an Authentication Administrator in AU: $AdministrativeUnitName"
+			return
+		}
+		
+		$RoleMemberInfo = New-Object -TypeName Microsoft.Open.AzureAD.Model.RoleMemberInfo -ErrorAction Stop
+		$RoleMemberInfo.ObjectId = $AuthAdminUser.ObjectId
+		Add-AzureADScopedRoleMembership -ObjectId $AUId -RoleObjectId $AuthAdminRoleID -RoleMemberInfo $RoleMemberInfo -ErrorAction Stop | Out-Null
+		Write-Verbose "Added $($AuthAdminUser.UserPrincipalName) as an Authentication Administrator to AU: $AdministrativeUnitName"
+	}
+	catch
+	{
+		Write-Error "Unable to user $($AuthAdminUser.UserPrincipalName) as an Authentication Administrator to AU: $AdministrativeUnitName"
+		return
+	}
+}
+Export-ModuleMember -Function 'Add-DelegatedAuthAdminsToAU'
+
+function Remove-DelegatedAuthAdminsToAU
+{
+	[CmdletBinding()]
+
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[Alias('AUName')]
+		[string]
+		[ValidateNotNullOrEmpty()]
+		$AdministrativeUnitName,
+
+		[Parameter(Mandatory = $true)]
+		[Alias('UPN')]
+		[string]
+		[ValidateNotNullOrEmpty()]
+		$AuthenticationAdminUPN		
+	)
+
+	$AUId = Get-AUByName -AUName $AdministrativeUnitName
+	if (!$AUId)
+	{
+		Write-Error "Cannot find Administrative Unit with name: $AdministrativeUnitName"
+		return
+	}
+
+	if (!(Get-AuthAdminRoleID))
+	{
+		Write-Error "Unable to get the role ID for the Authentication Administrator role"
+		return
+	}
+
+	$AuthAdminUser = Get-MFAUser -UserPrincipalName $AuthenticationAdminUPN
+	if ($null -eq $AuthAdminUser)
+	{
+		Write-Error "Cannot find user with UPN $AuthenticationAdminUPN"
+		return
+	}
+
+	try
+	{
+		$RoleInfo = Get-AzureADScopedRoleMembership -ObjectId $AUId | Where-Object { ($_.RoleObjectId -eq $Script:AuthAdminRoleID) -and ($_.RoleMemberInfo.ObjectId -eq $AuthAdminUser.ObjectId) }
+
+		if ($null -eq $RoleInfo)
+		{
+			Write-Warning "$($AuthAdminUser.UserPrincipalName) is not an Authentication Administrator in AU: $AdministrativeUnitName"
+			return
+		}
+		
+		Remove-AzureADScopedRoleMembership -ObjectId $AUId -ScopedRoleMembershipId $RoleInfo.Id
+		Write-Verbose "Removed $($AuthAdminUser.UserPrincipalName) as an Authentication Administrator to AU: $AdministrativeUnitName"
+	}
+	catch
+	{
+		Write-Error "Unable to remove $($AuthAdminUser.UserPrincipalName) as an Authentication Administrator to AU: $AdministrativeUnitName"
+		return
+	}
+}
+Export-ModuleMember -Function 'Remove-DelegatedAuthAdminsToAU'
