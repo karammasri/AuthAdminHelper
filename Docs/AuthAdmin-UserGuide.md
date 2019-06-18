@@ -142,7 +142,7 @@ Add-DelegatedAuthAdminsToAU -AdministrativeUnitName <AUName> -AuthenticationAdmi
 Where:
 
 - `<AUName>` is the display name of the Administrative Unit to query for delegated Authentication Administrators.
-- `<AuthenticationAdminUPN>` is the user principal name of the delegated Authentication Administrator to add to the Administrative Unit
+- `<AuthAdminUPN>` is the user principal name of the delegated Authentication Administrator to add to the Administrative Unit
 
 ## Remove a delegated Authentication Administrator from an Administrative Unit
 
@@ -155,7 +155,7 @@ Remove-DelegatedAuthAdminsToAU -AdministrativeUnitName <AUName> -AuthenticationA
 Where:
 
 - `<AUName>` is the display name of the Administrative Unit to query for delegated Authentication Administrators.
-- `<AuthenticationAdminUPN>` is the user principal name of the delegated Authentication Administrator to remove from the Administrative Unit
+- `<AuthAdminUPN>` is the user principal name of the delegated Authentication Administrator to remove from the Administrative Unit
 
 ## About the output messages
 
