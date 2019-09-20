@@ -805,7 +805,7 @@ function Add-DelegatedAuthAdminsToAU
 
 	try
 	{
-		$IsInRoleAlready = (@(Get-AzureADScopedRoleMembership -ObjectId $AUId | Where-Object { ($_.RoleObjectId -eq $Script:AuthAdminRoleID) -and ($_.RoleMemberInfo.ObjectId -eq $AuthAdminUser.ObjectId) }).Count -gt 1)
+		$IsInRoleAlready = (@(Get-AzureADScopedRoleMembership -ObjectId $AUId | Where-Object { ($_.RoleObjectId -eq $Script:AuthAdminRoleID) -and ($_.RoleMemberInfo.ObjectId -eq $AuthAdminUser.ObjectId) }).Count -gt 0)
 
 		if ($IsInRoleAlready)
 		{
@@ -820,7 +820,7 @@ function Add-DelegatedAuthAdminsToAU
 	}
 	catch
 	{
-		Write-Error "Unable to user $($AuthAdminUser.UserPrincipalName) as an Authentication Administrator to AU: $AdministrativeUnitName"
+		Write-Error "Unable to set user $($AuthAdminUser.UserPrincipalName) as an Authentication Administrator to AU: $AdministrativeUnitName"
 		return
 	}
 }
